@@ -1,0 +1,21 @@
+dist
+coverage
+node_modules
+pnpm-lock.yaml
+docs/.vitepress/cache
+docs/.vitepress/dist
+docs/en/api
+CHANGELOG.md
+
+# Hand-authored docs — kept pristine, not Prettier-owned. Only the two VitePress
+# landing pages this tooling generated are formatted.
+AGENTS.md
+CLAUDE.md
+CONTRIBUTING.md
+CONTRIBUTING.en.md
+CONVENTIONS.md
+README.md
+README.en.md
+docs/**/*.md
+!docs/index.md
+!docs/en/index.md

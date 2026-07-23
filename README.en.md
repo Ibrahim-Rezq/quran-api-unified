@@ -1,0 +1,113 @@
+# quran-api-unified
+
+[العربية](./README.md) · **English**
+
+A JavaScript/TypeScript library that unifies access to the many Quran data sources — text,
+audio, translation, and tafsir — behind a single interface and one normalized schema, with
+automatic provider selection and fallback when a source is unavailable, so your app is never
+locked to a single provider.
+
+> **Under development.** Not yet published to npm; the examples below describe the intended API.
+
+## What it is
+
+Building Quran apps means dealing with fragmented sources: one API returns verses in a field
+called `verses`, another calls it `ayahs` with a completely different shape, a third only
+serves audio, a fourth serves translations. That fragmentation ties your app to one source —
+if it goes down (as happens in peak seasons) you end up rewriting parts of your frontend.
+
+This library is a unification layer that sits between your app and those sources: it takes the
+raw data from whichever provider is available, transforms it into one fixed shape that you
+define, and hands it back. You ask for an ayah or a surah, request whatever you want alongside
+it — audio, translation, tafsir — and get it all in a single call, in the same shape no matter
+which source served it.
+
+## Features
+
+- **One interface** over many sources; you don't care which one served the request.
+- **A unified schema** per content type: text, audio, translation, tafsir.
+- **Automatic fallback**: if a source fails, the library moves to the next and records the
+  attempt trail for you.
+- **One call for everything**: an ayah or surah with its audio, translation, and tafsir in a
+  single request, even when each comes from a different source.
+- **An extensible adapter system**: every provider has its own adapter, and you can register
+  your own.
+- **Keyless by default**, with optional credential support for providers that require it.
+- **Runs everywhere**: Node, browsers, Deno, and Bun; ESM and CJS; full TypeScript types.
+
+## Install
+
+```bash
+npm i quran-api-unified
+# or
+pnpm add quran-api-unified
+```
+
+## Quick start
+
+```ts
+import { createQuranClient } from 'quran-api-unified'
+
+const quran = createQuranClient()
+
+const res = await quran.get({
+  ref: { surah: 1, ayah: 1 },
+  include: ['text', 'audio', 'translation', 'tafsir'],
+})
+
+if (res.ok) {
+  console.log(res.value.text?.value?.text) // بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
+  console.log(res.value.audio?.value?.url) // the recitation URL
+} else {
+  console.error(res.error.code) // a typed error, with res.attempts holding the trail
+}
+```
+
+The result is **typed data, not exceptions**: you check `res.ok`, and each requested content
+part carries its own status, so if one fails the rest still succeed.
+
+## Supported providers
+
+| Provider | Id | Content | Needs credentials? |
+| --- | --- | --- | --- |
+| Quran Foundation | `quran_foundation` | text | Yes (OAuth2) |
+| Al-Quran Cloud | `alquran_cloud` | text, audio, translation | No |
+| Quran API (Edge) | `quran_api_edge` | text, audio | No |
+| Quran Hub | `quran_hub` | text | No (via proxy) |
+| Quran Explorer | `quran_finder` | text | No (via proxy) |
+| Tafsir API (spa5k) | `spa5k_tafsir` | tafsir | No |
+
+Each provider has a reference page under [`docs/providers/`](./docs/providers) explaining its
+upstream API and why the adapter maps it the way it does.
+
+## Credentials
+
+The library works with **no key at all** for the open providers. A provider that requires
+credentials (such as Quran Foundation) is configured when you create the client, keyed by the
+provider id:
+
+```ts
+const quran = createQuranClient({
+  credentials: {
+    quran_foundation: { clientId: '...', secret: '...' },
+  },
+})
+```
+
+An adapter that needs credentials it wasn't given is skipped in auto-selection, and throws
+only if you request it explicitly by name.
+
+## Documentation
+
+Full documentation — guides, the API reference, and provider pages — lives on the docs site
+(built with VitePress) and in the [`docs/`](./docs) folder. The documentation is Arabic-first
+with an English mirror.
+
+## Contributing
+
+Contributions are welcome, and the most useful are new provider adapters. The contributing
+guide and the adapter contract are in [`CONTRIBUTING.md`](./CONTRIBUTING.md).
+
+## License
+
+[MIT](./LICENSE).
